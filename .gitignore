@@ -32,7 +32,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-
+# API 키 파일
+.env
 # Symbolication related
 app.*.symbols
 
