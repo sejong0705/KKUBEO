@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "650074123699",
+    "project_id": "kkubeo-eaacc",
+    "storage_bucket": "kkubeo-eaacc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650074123699:android:524752b48037fa49d52fc6",
+        "android_client_info": {
+          "package_name": "com.example.kkubeo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKmW0FWqY9PnmPwoFzwQH-JaA30kP0hWA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
