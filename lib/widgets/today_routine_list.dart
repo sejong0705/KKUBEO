@@ -5,50 +5,37 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class TodayRoutineList extends StatefulWidget {
+  final List<String> routines;
   final void Function(List<String>) onChanged;
+  final void Function()? onRoutineChanged;
 
-  const TodayRoutineList({super.key, required this.onChanged});
+  const TodayRoutineList({super.key,
+    required this.onChanged,
+    required this.routines,
+    this.onRoutineChanged,
+  });
 
   @override
   State<TodayRoutineList> createState() => _TodayRoutineListState();
 }
 
 class _TodayRoutineListState extends State<TodayRoutineList> {
-  List<String> routines = [];
+  final ScrollController _scrollController = ScrollController();
+
+  List<String> get routines => widget.routines;
   List<String> completed = [];
   Map<String, Duration> durations = {};
 
   @override
-  void initState() {
-    super.initState();
-    _loadTodayRoutines();
+  void dispose() {
+    _scrollController.dispose(); //메모리 누수 방지
+    super.dispose();
   }
 
-  Future<void> _loadTodayRoutines() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id');
-    if (userId == null) return;
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('routines')
-        .get();
-
-    final today = DateTime.now();
-    final weekdayKor = ["월", "화", "수", "목", "금", "토", "일"][today.weekday - 1];
-
-    final todayRoutines = snapshot.docs.where((doc) {
-      final data = doc.data();
-      final List repeatDays = data['repeatDays'] ?? [];
-      return repeatDays.contains(weekdayKor);
-    }).map((doc) => doc['title'].toString()).toList();
-
-    setState(() {
-      routines = todayRoutines;
-    });
-
-    await _loadTodayCheckLog(); // checkLog까지 불러오기
+  @override
+  void initState() {
+    super.initState();
+    _loadTodayCheckLog();
   }
 
   Future<void> _loadTodayCheckLog() async {
@@ -176,9 +163,11 @@ class _TodayRoutineListState extends State<TodayRoutineList> {
           Container(
             constraints: const BoxConstraints(maxHeight: 300),
             child: Scrollbar(
+              controller: _scrollController,
               thumbVisibility: true,
               child: ListView.builder(
                 shrinkWrap: true,
+                controller: _scrollController,
                 itemCount: routines.length,
                 itemBuilder: (context, index) {
                   final routine = routines[index];

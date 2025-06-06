@@ -144,6 +144,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 24),
             TodayRoutineList(
+              routines: todayRoutines,
               onChanged: (updatedCompleted) {
                 setState(() {
                   completedRoutines = updatedCompleted;
