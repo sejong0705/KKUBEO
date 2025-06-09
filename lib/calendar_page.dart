@@ -40,34 +40,58 @@ class _CalendarPageState extends State<CalendarPage> {
   }
   Future<void> fetchCompletionData() async {
     if (userId == null) return;
+    // 루틴 및 수행 기록 불러오기
+    final routinesRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId!)
+        .collection('routines');
 
     final checkLogRef = FirebaseFirestore.instance
         .collection('users')
-        .doc(userId)
+        .doc(userId!)
         .collection('checkLog');
 
-    final snapshot = await checkLogRef.get();
+    final routinesSnapshot = await routinesRef.get();
+    final checkLogSnapshot = await checkLogRef.get();
+
+    // 모든 루틴 정보 불러오기 (title + 반복요일)
+    final allRoutines = routinesSnapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'title': data['title'],
+        'repeatDays': List<String>.from(data['repeatDays'] ?? []),
+      };
+    }).toList();
 
     final Map<DateTime, double> result = {};
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      int total = 0;
-      int completed = 0;
+    // 각 날짜별로 수행률 계산
+    for (var logDoc in checkLogSnapshot.docs) {
+      final date = DateTime.tryParse(logDoc.id);
+      if (date == null) continue;
 
-      for (var entry in data.entries) {
-        final value = entry.value;
-        if (value is Map && value.containsKey('completed')) {
-          total++;
-          if (value['completed'] == true) completed++;
+      final logData = logDoc.data();
+
+      final weekdayStr = ['월', '화', '수', '목', '금', '토', '일'][date.weekday - 1];
+
+      // 해당 날짜에 반복 요일이 일치하는 루틴 목록 필터링
+      final todaysRoutines = allRoutines
+          .where((r) => r['repeatDays'].contains(weekdayStr))
+          .map((r) => r['title'] as String)
+          .toList();
+
+      if (todaysRoutines.isEmpty) continue;
+
+      int total = todaysRoutines.length;
+      int completedCount = 0;
+
+      for (final routineTitle in todaysRoutines) {
+        final routineLog = logData[routineTitle];
+        if (routineLog is Map && routineLog['completed'] == true) {
+          completedCount++;
         }
       }
-
-      if (total == 0) continue; // 루틴이 하나도 없던 날은 건너뜀
-
-      final date = DateTime.tryParse(doc.id); // 날짜 포맷 체크
-      if (date != null) {
-        result[date] = completed / total;
-      }
+      //날짜 별 퍼센트 저장
+      result[date] = completedCount / total;
     }
 
     setState(() {

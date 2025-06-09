@@ -4,7 +4,8 @@ import 'package:kkubeo/widgets/routine_edit_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyPage extends StatefulWidget {
-  const MyPage({super.key});
+  final VoidCallback? onRoutineChanged;
+  const MyPage({super.key, this.onRoutineChanged});
 
   @override
   State<MyPage> createState() => _MyPageState();
@@ -56,20 +57,46 @@ class _MyPageState extends State<MyPage> {
   Future<void> _deleteRoutine(String routineId) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
+    if (userId == null) return;
 
-    if (userId != null) {
-      await FirebaseFirestore.instance
+    final routineRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('routines')
+        .doc(routineId);
+
+    final routineDoc = await routineRef.get();
+    final title = routineDoc.data()?['title']; // ✅ title 가져오기
+
+    // 1. 루틴 삭제
+    await routineRef.delete();
+
+    // 2. 오늘 날짜 checkLog에서 해당 루틴 필드 삭제
+    if (title != null && title is String) {
+      final now = DateTime.now();
+      final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+      final checkLogRef = FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .collection('routines')
-          .doc(routineId)
-          .delete();
+          .collection('checkLog')
+          .doc(todayStr);
 
-      setState(() {
-        routines.removeWhere((routine) => routine['id'] == routineId);
+      // title 필드 삭제 시도
+      await checkLogRef.update({title: FieldValue.delete()}).catchError((e) {
+        // 해당 필드가 없을 수 있으니 무시
       });
     }
+
+    // 3. 로컬 상태 갱신
+    setState(() {
+      routines.removeWhere((routine) => routine['id'] == routineId);
+    });
+
+    // 4. 홈 화면 리프레시 콜백 호출
+    widget.onRoutineChanged?.call();
   }
+
   Future<void> _updateSingleRoutine(String routineId) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
@@ -95,6 +122,31 @@ class _MyPageState extends State<MyPage> {
         };
       }
     });
+  }
+  Future<void> _cleanUpCheckLogIfRepeatDayChanged({
+    required String userId,
+    required String routineTitle,
+    required List<String> oldDays,
+    required List<String> newDays,
+  }) async {
+    final now = DateTime.now();
+    final todayWeekday = ['월', '화', '수', '목', '금', '토', '일'][now.weekday - 1];
+
+    if (oldDays.contains(todayWeekday) && !newDays.contains(todayWeekday)) {
+      final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+      final checkLogRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('checkLog')
+          .doc(todayStr);
+
+      await checkLogRef.update({
+        routineTitle: FieldValue.delete(),
+      }).catchError((e) {
+        // 필드가 없을 수도 있으니 무시
+      });
+    }
   }
 
   @override
@@ -138,6 +190,8 @@ class _MyPageState extends State<MyPage> {
                       title: Text(routine['title']),
                       subtitle: Text("반복 요일: ${(routine['repeatDays'] as List).join(', ')}"),
                       onTap: () async {
+                        //수정 전 반복 요일을 먼저 저장
+                        final oldRepeatDays = List<String>.from(routine['repeatDays']);
                         final updated = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -147,6 +201,28 @@ class _MyPageState extends State<MyPage> {
 
                         if (updated == true) {
                           await _updateSingleRoutine(routine['id']);
+
+                          final prefs = await SharedPreferences.getInstance();
+                          final userId = prefs.getString('user_id');
+                          if (userId == null) return;
+
+                          // 🔽 루틴 수정 후 최신 데이터 가져오기
+                          final doc = await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(userId)
+                              .collection('routines')
+                              .doc(routine['id'])
+                              .get();
+
+                          final newRepeatDays = List<String>.from(doc.data()?['repeatDays'] ?? []);
+
+                          // 🔥 체크로그 정리 함수 호출
+                          await _cleanUpCheckLogIfRepeatDayChanged(
+                            userId: userId,
+                            routineTitle: routine['title'],
+                            oldDays: oldRepeatDays,
+                            newDays: newRepeatDays,
+                          );
                         }
                       },
                     ),
