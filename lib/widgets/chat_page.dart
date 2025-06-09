@@ -56,7 +56,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("AI 챗봇")),
+      appBar: AppBar(title: const Text("챗봇 상담사")),
       body: Column(
         children: [
           Expanded(
