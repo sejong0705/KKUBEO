@@ -127,7 +127,9 @@ class _TodayRoutineListState extends State<TodayRoutineList> {
     final h = duration.inHours;
     final m = duration.inMinutes % 60;
     final s = duration.inSeconds % 60;
-    return h > 0 ? "$h시간 $m분 $s초" : "$m분 $s초";
+    if (h > 0) return '$h시간 $m분 $s초';
+    if (m > 0) return '$m분 $s초';
+    return '$s초';
   }
 
   @override

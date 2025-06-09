@@ -1,8 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kkubeo/widgets/routine_edit_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:kkubeo/widgets/cheer_messages.dart';
 class MyPage extends StatefulWidget {
   final VoidCallback? onRoutineChanged;
   const MyPage({super.key, this.onRoutineChanged});
@@ -14,11 +16,33 @@ class MyPage extends StatefulWidget {
 class _MyPageState extends State<MyPage> {
   String nickname = '';
   List<Map<String, dynamic>> routines = [];
+  String? cheer;
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
+    _loadCheerMessage();
+  }
+  Future<void> _loadCheerMessage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10); // yyyy-MM-dd
+    final savedDate = prefs.getString('cheerDate');
+    final savedMessage = prefs.getString('cheerMessage');
+
+    if (savedDate == today && savedMessage != null) {
+      setState(() {
+        cheer = savedMessage;
+      });
+    } else {
+      final random = Random();
+      final newMessage = cheerMessages[random.nextInt(cheerMessages.length)];
+      await prefs.setString('cheerDate', today);
+      await prefs.setString('cheerMessage', newMessage);
+      setState(() {
+        cheer = newMessage;
+      });
+    }
   }
 
   Future<void> _loadUserInfo() async {
@@ -123,6 +147,7 @@ class _MyPageState extends State<MyPage> {
       }
     });
   }
+
   Future<void> _cleanUpCheckLogIfRepeatDayChanged({
     required String userId,
     required String routineTitle,
@@ -144,7 +169,6 @@ class _MyPageState extends State<MyPage> {
       await checkLogRef.update({
         routineTitle: FieldValue.delete(),
       }).catchError((e) {
-        // 필드가 없을 수도 있으니 무시
       });
     }
   }
@@ -156,7 +180,38 @@ class _MyPageState extends State<MyPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 응원 메시지
+            if (cheer != null)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("📣", style: TextStyle(fontSize: 28)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blueAccent, width: 1),
+                      ),
+                      child: Text(
+                        cheer!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              const CircularProgressIndicator(), // 로딩 중 표
+            const SizedBox(height: 20),
             Text('$nickname 루틴 리스트', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             Expanded(
