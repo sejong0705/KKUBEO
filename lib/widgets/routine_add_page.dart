@@ -53,7 +53,6 @@ class _RoutineAddPageState extends State<RoutineAddPage> {
           .collection('routines')
           .add({
         'title': title,
-        'isAiGenerated': false,
         'createdAt': Timestamp.now(),
         'repeatDays': selectedDays,
       });

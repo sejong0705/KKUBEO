@@ -190,33 +190,37 @@ class _MyPageState extends State<MyPage> {
                       title: Text(routine['title']),
                       subtitle: Text("반복 요일: ${(routine['repeatDays'] as List).join(', ')}"),
                       onTap: () async {
-                        //수정 전 반복 요일을 먼저 저장
+                        // 루틴 편집 전 기존 반복 요일을 저장 (checkLog 정리 비교용)
                         final oldRepeatDays = List<String>.from(routine['repeatDays']);
+                        // 루틴 편집 페이지로 이동
                         final updated = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => RoutineEditPage(routineId: routine['id']),
                           ),
                         );
-
+                        // 루틴이 수정되었다면
                         if (updated == true) {
+                          // 변경된 루틴 데이터를 다시 불러와 화면에 반영
                           await _updateSingleRoutine(routine['id']);
 
+                          // 사용자 ID 불러오기
                           final prefs = await SharedPreferences.getInstance();
                           final userId = prefs.getString('user_id');
                           if (userId == null) return;
 
-                          // 🔽 루틴 수정 후 최신 데이터 가져오기
+                          // 수정된 루틴 문서 가져오기 (새 repeatDays 확인용)
                           final doc = await FirebaseFirestore.instance
                               .collection('users')
                               .doc(userId)
                               .collection('routines')
                               .doc(routine['id'])
                               .get();
-
+                          // 수정된 반복 요일 불러오기
                           final newRepeatDays = List<String>.from(doc.data()?['repeatDays'] ?? []);
 
-                          // 🔥 체크로그 정리 함수 호출
+                          // 오늘 날짜가 기존에는 포함되고, 수정 후에는 빠졌을 경우
+                          // 오늘 날짜의 checkLog에서 해당 루틴 기록 제거
                           await _cleanUpCheckLogIfRepeatDayChanged(
                             userId: userId,
                             routineTitle: routine['title'],

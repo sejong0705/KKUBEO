@@ -137,7 +137,6 @@ class _CalendarPageState extends State<CalendarPage> {
     if (percentage < 0.75) return Colors.deepOrange[500]!;
     return Colors.deepOrange[700]!;
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +144,27 @@ class _CalendarPageState extends State<CalendarPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: Container(
+                height: 14,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.deepOrange[100]!,
+                      Colors.deepOrange[200]!,
+                      Colors.deepOrange[300]!,
+                      Colors.deepOrange[500]!,
+                      Colors.deepOrange[700]!,
+                    ],
+                    stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+                  ),
+                ),
+              ),
+            ),
             TableCalendar(
               firstDay: DateTime.utc(2001, 1, 1),
               lastDay: DateTime.utc(2099, 12, 31),
@@ -163,6 +183,16 @@ class _CalendarPageState extends State<CalendarPage> {
                   });
                 }
               },
+              //2week 버튼 안보이게
+              calendarFormat: CalendarFormat.month,
+              availableCalendarFormats: const {
+                CalendarFormat.month: '',
+              },
+              calendarStyle: const CalendarStyle(
+                defaultTextStyle: TextStyle(fontSize: 16), //일반 날짜
+                weekendTextStyle: TextStyle(fontSize: 16, color: Colors.red), //주말
+                todayTextStyle: TextStyle(fontSize: 16), //오늘
+              ),
               calendarBuilders: CalendarBuilders(
                 defaultBuilder: (context, day, _) {
                   final date = DateTime(day.year, day.month, day.day);
