@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-const apiKey = String.fromEnvironment('OPENAI_API_KEY'); // ← dart-define으로 주입
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<String> sendMessageToGPT(String userMessage) async {
+  final apiKey = dotenv.env['OPENAI_API_KEY'];
   final endpoint = "https://api.openai.com/v1/chat/completions";
 
   final response = await http.post(
