@@ -193,15 +193,15 @@ class _MyPageState extends State<MyPage> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.blueGrey[100]!,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blueAccent, width: 1),
+                        border: Border.all(color: Colors.black, width: 1),
                       ),
                       child: Text(
                         cheer!,
                         style: const TextStyle(
                           fontSize: 16,
-                          color: Colors.blueAccent,
+                          color: Colors.black54,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
