@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '꾸버티기',
+      title: '꾸버',
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.deepOrange,
