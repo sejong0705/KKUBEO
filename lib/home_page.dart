@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:kkubeo/widgets/routine_add_page.dart';
-import 'package:kkubeo/splash_screen.dart';
 import 'package:kkubeo/theme_provider.dart';
 import 'package:kkubeo/widgets/chat_page.dart';
 import 'package:kkubeo/widgets/today_routine_list.dart';

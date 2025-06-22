@@ -2,7 +2,8 @@
     package="com.example.kkubeo">
     <application
         android:label="kkubeo"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/kkubeo"
+        android:roundIcon="@mipmap/kkubeo_round">
         <activity
             android:name=".MainActivity"
             android:exported="true"

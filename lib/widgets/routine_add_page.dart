@@ -47,11 +47,14 @@ class _RoutineAddPageState extends State<RoutineAddPage> {
           .map((e) => e.key)
           .toList();
 
+      //문서 구분 편하게 하기 위해서
+      String docId = '${title}_${DateTime.now().millisecondsSinceEpoch}';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection('routines')
-          .add({
+          .doc(docId)
+          .set({
         'title': title,
         'createdAt': Timestamp.now(),
         'repeatDays': selectedDays,
